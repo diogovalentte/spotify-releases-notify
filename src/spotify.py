@@ -212,4 +212,12 @@ def get_artist_albums(access_token, id, include_groups: str | None = None):
             break
         url = data["next"]
 
+    # Filter out compilation albums that are included for some reason
+    if (
+        include_groups
+        and "appears_on" in include_groups
+        and "compilation" not in include_groups
+    ):
+        return [album for album in albums if not album["album_type"] == "compilation"]
+
     return albums
