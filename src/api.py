@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime, timedelta
 from time import sleep
@@ -69,9 +70,20 @@ def spotify_notify():
     include_groups = request.args.get("include_groups")
     if not include_groups:
         include_groups = "album,single,appears_on"
+    date = request.args.get("date")
+    if date:
+        if date == "today":
+            today_str = datetime.now().strftime("%Y-%m-%d")
+        elif date == "yesterday":
+            today_str = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        else:
+            today_str = re.compile(r"\d{4}-\d{2}-\d{2}").search(date)
+            if not today_str:
+                return jsonify({"error": "Invalid date format"}), 400
+    else:
+        today_str = datetime.now().strftime("%Y-%m-%d")
 
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    today_releases = []
+    day_releases = []
     logger = get_logger()
     start = datetime.now()
     try:
@@ -84,7 +96,7 @@ def spotify_notify():
                 for album in albums:
                     if album["release_date"] == today_str:
                         album["og_artist"] = artist["name"]
-                        today_releases.append(album)
+                        day_releases.append(album)
             except Exception as e:
                 logger.error(f"Error getting albums for {artist['name']}: {e}")
                 try:
@@ -92,7 +104,7 @@ def spotify_notify():
                     for album in albums:
                         if album["release_date"] == today_str:
                             album["og_artist"] = artist["name"]
-                            today_releases.append(album)
+                            day_releases.append(album)
                 except Exception as e:
                     logger.error(f"Error getting albums for {artist['name']}: {e}")
                     logger.warning(
@@ -103,14 +115,14 @@ def spotify_notify():
         end = datetime.now()
         diff = end - start
 
-        if len(today_releases) > 0:
-            send_release_notifications(today_releases)
+        if len(day_releases) > 0:
+            send_release_notifications(day_releases)
 
         return {
-            "releases": today_releases,
             "start_time": start,
             "end_time": end,
             "took_seconds": diff.total_seconds(),
+            "releases": day_releases,
         }
     except Exception as e:
         send_error_notifications(e)
