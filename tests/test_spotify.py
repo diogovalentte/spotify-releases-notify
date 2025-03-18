@@ -18,23 +18,27 @@ TEST_TOKEN = "test_token"
 
 
 class TestToken:
+    @pytest.mark.not_logged
     @pytest.mark.order(3)
     def test_save_false_spotify_tokens(self):
         expires_in_seconds = 3600
         expires_in = datetime.now() + timedelta(seconds=expires_in_seconds)
         save_spotify_tokens(TEST_TOKEN, TEST_TOKEN, expires_in)
 
+    @pytest.mark.not_logged
     @pytest.mark.order(4)
     def test_get_false_spotify_tokens(self):
         token, refresh_token, _ = get_spotify_tokens()
         assert token == TEST_TOKEN
         assert refresh_token == TEST_TOKEN
 
+    @pytest.mark.not_logged
     @pytest.mark.order(5)
     def test_get_token(self):
         token = get_token()
         assert token
 
+    @pytest.mark.logged
     @pytest.mark.order(6)
     def test_get_user_followed_artists(self, token):
         artists = get_user_followed_artists(token)
@@ -46,6 +50,7 @@ class TestToken:
             assert "images" in artist
             assert "name" in artist
 
+    @pytest.mark.logged
     @pytest.mark.order(7)
     def test_get_artist_albums(self, token):
         albums = get_artist_albums(token, "3fMbdgg4jU18AjLCKBhRSm")

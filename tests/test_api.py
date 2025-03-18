@@ -8,17 +8,20 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 
 
 class TestAPI:
+    @pytest.mark.not_logged
     @pytest.mark.order(8)
     def test_health(self, client: FlaskClient):
         response = client.get("/health")
         assert response.status_code == 200
-        assert response.data == b"OK"
+        assert response.text == "OK"
 
+    @pytest.mark.not_logged
     @pytest.mark.order(9)
     def test_login(self, client: FlaskClient):
         response = client.get("/spotify/login")
         assert response.status_code == 302
 
+    @pytest.mark.not_logged
     @pytest.mark.order(10)
     def test_callback_validations(self, client: FlaskClient):
         response = client.get("/spotify/callback")
@@ -44,8 +47,9 @@ class TestAPI:
         assert response.status_code == 400
         assert response.json and response.json["error"] == "random_error"
 
+    @pytest.mark.logged
     @pytest.mark.order(12)
     def test_spotify_notify(self, client):
         response = client.get("/spotify/notify?notify_error=false")
         assert response.status_code == 200
-        assert response.json["took_seconds"] > 0
+        assert response.text == "OK"

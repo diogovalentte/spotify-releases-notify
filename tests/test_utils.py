@@ -10,6 +10,7 @@ from src.utils import (
 )
 
 
+@pytest.mark.not_logged
 @pytest.mark.order(0)
 def test_get_configs():
     configs = get_configs()
