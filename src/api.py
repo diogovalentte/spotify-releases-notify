@@ -113,6 +113,7 @@ def spotify_notify():
 
         return "OK"
     except Exception as e:
+        logger.error(f"An error occurred: {e}")
         if notify_error:
             send_error_notifications(e)
         return jsonify({"error": str(e)}), 500
