@@ -3,7 +3,7 @@ FROM python:3.10.0-slim
 WORKDIR /app
 
 COPY requirements.txt requirements.txt
-RUN apt update && apt install git -y && pip install -r requirements.txt
+RUN apt update && apt install git curl -y && pip install -r requirements.txt
 RUN pip install gunicorn
 COPY . .
 
