@@ -1,0 +1,20 @@
+services:
+  spotify-releases-notify:
+    container_name: spotify-releases-notify
+    image: ghcr.io/diogovalentte/spotify-releases-notify:latest
+    environment:
+      # Spotify
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REDIRECT_URI=${REDIRECT_URI}
+      # Ntfy
+      - NTFY_TOKEN=${NTFY_TOKEN}
+      - NTFY_TOPIC=${NTFY_TOPIC}
+      - NTFY_URL=${NTFY_URL}
+      # Database encryption
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    volumes:
+      - ./config:/config
+    ports:
+      - 8000:8000
+    restart: unless-stopped
