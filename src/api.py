@@ -67,32 +67,17 @@ def callback():
 
 @app.route("/spotify/notify")
 def spotify_notify():
-    include_groups = request.args.get("include_groups")
-    if not include_groups:
-        include_groups = "album,single,appears_on"
-    notify_error = request.args.get("notify_error")
-    if notify_error:
-        if notify_error == "true":
-            notify_error = True
-        elif notify_error == "false":
-            notify_error = False
-        else:
-            return jsonify({"error": "Invalid notify_error value"}), 400
-    else:
-        notify_error = True
+    include_groups = validate_include_groups_arg(request.args.get("include_groups"))
+    if include_groups is None:
+        return jsonify({"error": "Invalid include_groups"}), 400
 
-    date = request.args.get("date")
-    if date:
-        if date == "today":
-            today_str = datetime.now().strftime("%Y-%m-%d")
-        elif date == "yesterday":
-            today_str = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-        else:
-            today_str = re.compile(r"\d{4}-\d{2}-\d{2}").search(date)
-            if not today_str:
-                return jsonify({"error": "Invalid date format"}), 400
-    else:
-        today_str = datetime.now().strftime("%Y-%m-%d")
+    notify_error = validate_notify_error_arg(request.args.get("notify_error"))
+    if notify_error is None:
+        return jsonify({"error": "Invalid notify_error"}), 400
+
+    day_to_get_releases = validate_date_arg(request.args.get("date"))
+    if day_to_get_releases is None:
+        return jsonify({"error": "Invalid date"}), 400
 
     day_releases = []
     logger = get_logger()
@@ -105,7 +90,7 @@ def spotify_notify():
             try:
                 albums = get_artist_albums(token, artist["id"], include_groups)
                 for album in albums:
-                    if album["release_date"] == today_str:
+                    if album["release_date"] == day_to_get_releases:
                         album["og_artist"] = artist["name"]
                         day_releases.append(album)
             except Exception as e:
@@ -113,7 +98,7 @@ def spotify_notify():
                 try:
                     albums = get_artist_albums(token, artist["id"], include_groups)
                     for album in albums:
-                        if album["release_date"] == today_str:
+                        if album["release_date"] == day_to_get_releases:
                             album["og_artist"] = artist["name"]
                             day_releases.append(album)
                 except Exception as e:
@@ -140,6 +125,49 @@ def spotify_notify():
         if notify_error:
             send_error_notifications(e)
         return jsonify({"error": str(e)}), 500
+
+
+def validate_include_groups_arg(include_groups: str | None) -> str | None:
+    include_groups_ret = "album,single,appears_on"
+    if include_groups:
+        groups = include_groups.split(",")
+        for group in groups:
+            if group not in ["album", "single", "appears_on", "compilation"]:
+                return None
+        include_groups_ret = include_groups
+
+    return include_groups_ret
+
+
+def validate_notify_error_arg(notify_error_str: str | None) -> bool | None:
+    notify_error = True
+    if notify_error_str:
+        if notify_error_str == "true":
+            notify_error = True
+        elif notify_error_str == "false":
+            notify_error = False
+        else:
+            return None
+
+    return notify_error
+
+
+def validate_date_arg(date: str | None) -> str | None:
+    if date:
+        if date == "today":
+            today_str = datetime.now().strftime("%Y-%m-%d")
+        elif date == "yesterday":
+            today_str = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        else:
+            today_str = re.compile(r"\d{4}-\d{2}-\d{2}").search(date)
+            if not today_str:
+                return None
+            else:
+                today_str = today_str.group()
+    else:
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
+    return today_str
 
 
 def send_release_notifications(releases):
