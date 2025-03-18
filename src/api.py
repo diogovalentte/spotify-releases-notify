@@ -70,6 +70,17 @@ def spotify_notify():
     include_groups = request.args.get("include_groups")
     if not include_groups:
         include_groups = "album,single,appears_on"
+    notify_error = request.args.get("notify_error")
+    if notify_error:
+        if notify_error == "true":
+            notify_error = True
+        elif notify_error == "false":
+            notify_error = False
+        else:
+            return jsonify({"error": "Invalid notify_error value"}), 400
+    else:
+        notify_error = True
+
     date = request.args.get("date")
     if date:
         if date == "today":
@@ -118,6 +129,7 @@ def spotify_notify():
         if len(day_releases) > 0:
             send_release_notifications(day_releases)
 
+        # return "OK" # TODO: Uncomment
         return {
             "start_time": start,
             "end_time": end,
@@ -125,7 +137,8 @@ def spotify_notify():
             "releases": day_releases,
         }
     except Exception as e:
-        send_error_notifications(e)
+        if notify_error:
+            send_error_notifications(e)
         return jsonify({"error": str(e)}), 500
 
 
