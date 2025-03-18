@@ -4,11 +4,13 @@ Project to notify you about new releases of your followed artists on Spotify.
 
 It does it by running an API where you can login with your Spotify account and do requests to notify new releases. The API is projected to notify all releases from a specific day, so you should run it only once a day.
 
+Notifications are sent to a [Ntfy](https://github.com/binwiederhier/ntfy) topic.
+
 # How to install
 
 ## Docker
 
-1. Create a [Spotify app](https://developer.spotify.com/dashboard). It'll be used to get your followed artists and releases.
+1. Create a [Spotify app](https://developer.spotify.com/dashboard) to get a client ID and secret. It'll be used to get your followed artists and releases.
 
 - App name and description can be anything you want.
 - Redirect URL should be an URL where you can access the container's API from your web-browser + `/spotify/callback`. Examples:
@@ -49,6 +51,10 @@ This project doesn't have an authentication system to access the API. It's recom
 
 ## Spotify's API rate limit
 
-Spotify's API has a rate limit. If you follow many artists, the API will execute more call on the Spotify API.
+Spotify's API has a rate limit. If you follow many artists, the API will execute more calls on the Spotify API.
 
-If the API runs into the rate limit, the Spotify API's usually sends back how many seconds the API should wait before making another request. The API will wait and retry the request unless Spotify says it has to wait more than 24 hours. In this case, the API will return an error.
+If the API runs into the rate limit, the Spotify API's usually sends back how many seconds the API should wait before making another request. The API will wait and retry the request unless Spotify says it has to wait more than 24 hours. In this case, the API will return an error and possible notify you.
+
+- It'll also log the error in the container's logs.
+
+Keep in mind that requesting in the Spotify's API while being in the rate limit will increase the time you have to wait to make another request, ranging from a few seconds to hours.
