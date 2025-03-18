@@ -81,7 +81,6 @@ def spotify_notify():
 
     day_releases = []
     logger = get_logger()
-    start = datetime.now()
     try:
         token = get_token()
         artists = get_user_followed_artists(token)
@@ -108,19 +107,11 @@ def spotify_notify():
                     )
             finally:
                 sleep(2)
-        end = datetime.now()
-        diff = end - start
 
         if len(day_releases) > 0:
             send_release_notifications(day_releases)
 
-        # return "OK" # TODO: Uncomment
-        return {
-            "start_time": start,
-            "end_time": end,
-            "took_seconds": diff.total_seconds(),
-            "releases": day_releases,
-        }
+        return "OK"
     except Exception as e:
         if notify_error:
             send_error_notifications(e)
