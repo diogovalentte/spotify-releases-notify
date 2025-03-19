@@ -18,6 +18,8 @@ def get_configs():
     ntfy_url = os.environ.get("NTFY_URL")
     encryption_key = os.environ.get("ENCRYPTION_KEY")
     db_path = os.environ.get("DB_PATH")
+    redis_url = os.environ.get("REDIS_URL")
+    log_level_str = os.environ.get("LOG_LEVEL")
 
     if (
         not client_id
@@ -27,14 +29,28 @@ def get_configs():
         or not ntfy_token
         or not ntfy_topic
         or not ntfy_url
+        or not redis_url
     ):
         raise Exception("Missing environment variables")
 
     if not db_path:
         db_path = DEFAULT_DB_FILE_PATH
-
     if not os.path.isabs(db_path):
         raise Exception("DB_PATH must be an absolute path")
+
+    if not log_level_str:
+        log_level = logging.INFO
+    else:
+        level_mapping = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL,
+        }
+        log_level = log_level_str.upper()
+        if log_level not in level_mapping:
+            raise Exception("Invalid logging level")
 
     return {
         "client_id": client_id,
@@ -45,6 +61,8 @@ def get_configs():
         "ntfy_url": ntfy_url,
         "encryption_key": encryption_key,
         "db_path": db_path,
+        "redis_url": redis_url,
+        "logging_level": log_level,
     }
 
 
@@ -65,15 +83,17 @@ def decrypt_str(s: str):
 
 
 def get_logger():
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger = logging.getLogger("spotify_releases_notify")
 
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    if not logger.hasHandlers():
+        logger.setLevel(get_configs()["logging_level"])
+
+        handler = logging.StreamHandler(sys.stdout)
+        logger.addHandler(handler)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        handler.setFormatter(formatter)
+        handler.setLevel(get_configs()["logging_level"])
 
     return logger

@@ -50,6 +50,6 @@ class TestAPI:
     @pytest.mark.logged
     @pytest.mark.order(12)
     def test_spotify_notify(self, client):
-        response = client.get("/spotify/notify?notify_error=false")
+        response = client.get("/spotify/notify?notify_error=true")
         assert response.status_code == 200
         assert response.text == "OK"

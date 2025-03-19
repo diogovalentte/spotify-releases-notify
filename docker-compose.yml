@@ -13,8 +13,19 @@ services:
       - NTFY_URL=${NTFY_URL}
       # Database encryption
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      # Redis
+      - REDIS_URL=redis://spotify-releases-notify-redis:6379
     volumes:
       - ./config:/config
     ports:
       - 8000:8000
+    restart: unless-stopped
+
+  spotify-releases-notify-redis:
+    container_name: spotify-releases-notify-redis
+    image: redis:7-alpine
+    volumes:
+      - ./data:/data
+    # ports:
+    #   - 6379:6379
     restart: unless-stopped

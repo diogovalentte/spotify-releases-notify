@@ -43,6 +43,8 @@ You can use a cron job to run the API once a day with the desired parameters:
 0 0 * * * curl -X GET -H "accept: application/json" "http://localhost:8000/spotify/notify?date=yesterday&include_groups=album,single"
 ```
 
+The route will queue the job and immediately return the message "OK". The job will then run in the background.
+
 # Notes
 
 ## No API authentication system
@@ -58,3 +60,12 @@ If the API runs into the rate limit, the Spotify API's usually sends back how ma
 - It'll also log the error in the container's logs.
 
 Keep in mind that requesting in the Spotify's API while being in the rate limit will increase the time you have to wait to make another request, ranging from a few seconds to hours.
+
+## Encryption Key
+
+If you lost/want to change the encryption key, you need to:
+
+1. Delete the database file in `/config`.
+2. Set the new `ENCRYPTION_KEY` environment variable.
+3. Restart the container.
+4. Authenticate with Spotify again.

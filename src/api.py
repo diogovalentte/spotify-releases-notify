@@ -3,7 +3,9 @@ import uuid
 from datetime import datetime, timedelta
 from time import sleep
 
+# import rq_dashboard
 from flask import Flask, jsonify, redirect, request, session
+from flask_rq import RQ
 from pytfy import NtfyPublisher
 
 from src.spotify import (
@@ -15,9 +17,16 @@ from src.spotify import (
 )
 from src.utils import get_configs, get_logger
 
-app = Flask(__name__)
 configs = get_configs()
+app = Flask(__name__)
+app.config["RQ_CONNECTION"] = configs["redis_url"] + "/0"
+rq = RQ(app)
 app.secret_key = configs["encryption_key"]
+
+# app.config["RQ_DASHBOARD_REDIS_URL"] = configs["redis_url"] + "/0"
+# app.config.from_object(rq_dashboard.default_settings)
+# rq_dashboard.web.setup_rq_connection(app)
+# app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 
 
 @app.route("/health")
@@ -79,17 +88,37 @@ def spotify_notify():
     if day_to_get_releases is None:
         return jsonify({"error": "Invalid date"}), 400
 
+    try:
+        rq.queue.enqueue(
+            notify_spotify_releases,
+            include_groups,
+            notify_error,
+            day_to_get_releases,
+            job_timeout=86400,
+        )
+    except Exception as e:
+        send_error_notifications(e)
+        return jsonify({"error": str(e)}), 500
+
+    return "OK"
+
+
+def notify_spotify_releases(include_groups, notify_error, day_to_get_releases):
     day_releases = []
     logger = get_logger()
     try:
+        logger.info(f"Getting Spotify releases for {day_to_get_releases}...")
         token = get_token()
         artists = get_user_followed_artists(token)
 
         for artist in artists:
             try:
+                logger.debug(f"Getting albums for {artist['name']}...")
                 albums = get_artist_albums(token, artist["id"], include_groups)
                 for album in albums:
+                    logger.debug(f"Checking album {album['name']}...")
                     if album["release_date"] == day_to_get_releases:
+                        logger.debug(f"Found album {album['name']}!")
                         album["og_artist"] = artist["name"]
                         day_releases.append(album)
             except Exception as e:
@@ -110,13 +139,12 @@ def spotify_notify():
 
         if len(day_releases) > 0:
             send_release_notifications(day_releases)
-
-        return "OK"
+        logger.info("Spotify releases notified")
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         if notify_error:
             send_error_notifications(e)
-        return jsonify({"error": str(e)}), 500
+        raise e
 
 
 def validate_include_groups_arg(include_groups: str | None) -> str | None:
@@ -179,4 +207,6 @@ def send_error_notifications(e):
     ntfy = NtfyPublisher(
         configs["ntfy_url"], configs["ntfy_topic"], configs["ntfy_token"]
     )
-    ntfy.post(f"An error occurred:\n{e}", title="New Spotify Releases")
+    ntfy.post(
+        f"An error occurred:\n{e}", title="New Spotify Releases", priority="urgent"
+    )

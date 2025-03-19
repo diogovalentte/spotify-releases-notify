@@ -1,4 +1,6 @@
 pytfy @ git+https://github.com/diogovalentte/pytfy.git@32a54f03635a9762098af5e9db1a7a43a353d476
+asgiref==3.8.1
+async-timeout==5.0.1
 blinker==1.9.0
 certifi==2025.1.31
 cffi==1.17.1
@@ -7,6 +9,7 @@ click==8.1.8
 cryptography==44.0.2
 exceptiongroup==1.2.2
 Flask==3.1.0
+Flask-RQ==0.3.2
 idna==3.10
 iniconfig==2.0.0
 itsdangerous==2.2.0
@@ -18,7 +21,10 @@ pycparser==2.22
 pytest==8.3.5
 pytest-env==1.1.5
 pytest-order==1.3.0
+redis==5.2.1
 requests==2.32.3
+rq==2.1.0
 tomli==2.2.1
+typing_extensions==4.12.2
 urllib3==2.3.0
 Werkzeug==3.1.3
