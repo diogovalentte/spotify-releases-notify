@@ -114,8 +114,8 @@ def notify_spotify_releases(include_groups, notify_error, day_to_get_releases):
         for artist in artists:
             try:
                 logger.debug(f"Getting albums for {artist['name']}...")
-                albums = get_artist_albums(token, artist["id"], include_groups)
-                for album in albums:
+                day_releases = get_artist_albums(token, artist["id"], include_groups)
+                for album in day_releases:
                     logger.debug(f"Checking album {album['name']}...")
                     if album["release_date"] == day_to_get_releases:
                         logger.debug(f"Found album {album['name']}!")
@@ -124,8 +124,10 @@ def notify_spotify_releases(include_groups, notify_error, day_to_get_releases):
             except Exception as e:
                 logger.error(f"Error getting albums for {artist['name']}: {e}")
                 try:
-                    albums = get_artist_albums(token, artist["id"], include_groups)
-                    for album in albums:
+                    day_releases = get_artist_albums(
+                        token, artist["id"], include_groups
+                    )
+                    for album in day_releases:
                         if album["release_date"] == day_to_get_releases:
                             album["og_artist"] = artist["name"]
                             day_releases.append(album)
@@ -138,6 +140,17 @@ def notify_spotify_releases(include_groups, notify_error, day_to_get_releases):
                 sleep(2)
 
         if len(day_releases) > 0:
+            # Filter out compilation albums that are included for some reason
+            if (
+                include_groups
+                and "appears_on" in include_groups
+                and "compilation" not in include_groups
+            ):
+                day_releases = [
+                    release
+                    for release in day_releases
+                    if not release["album_type"] == "compilation"
+                ]
             send_release_notifications(day_releases)
         logger.info("Spotify releases notified")
     except Exception as e:

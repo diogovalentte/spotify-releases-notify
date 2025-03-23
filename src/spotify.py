@@ -190,6 +190,21 @@ def get_user_followed_artists(access_token):
 
 @check_for_rate_limit
 def get_artist_albums(access_token, id, include_groups: str | None = None):
+    """Get an artist's albums.
+
+    Args:
+        access_token: Spotify API access token.
+        id: Artist ID.
+        include_groups (str | None, optional): can be a combination of "album", "single", "appears_on", and "compilations", like "album,single,apeears_on". Defaults to None.
+            - If None, uses the Spoitfy API default.
+            - If "appears_on" is added and "compilations" is not, the API will still return compilation albums, so you need to filter them out.
+
+    Returns:
+        (list[dic[str, Any]]): Artist albums.
+
+    Raises:
+        requests.exceptions.HTTPError: If the API request fails/status code is not 2xx.
+    """
     headers = {
         "Authorization": f"Bearer {access_token}",
     }
@@ -208,13 +223,5 @@ def get_artist_albums(access_token, id, include_groups: str | None = None):
         if not data["next"]:
             break
         url = data["next"]
-
-    # Filter out compilation albums that are included for some reason
-    if (
-        include_groups
-        and "appears_on" in include_groups
-        and "compilation" not in include_groups
-    ):
-        return [album for album in albums if not album["album_type"] == "compilation"]
 
     return albums
