@@ -47,10 +47,6 @@ The route will queue the job and immediately return the message "OK". The job wi
 
 # Notes
 
-## No API authentication system
-
-This project doesn't have an authentication system to access the API. It's recommended to use it only in a private environment and exposing it only to login.
-
 ## Spotify's API rate limit
 
 Spotify's API has a rate limit. If you follow many artists, the API will execute more calls on the Spotify API.
@@ -60,6 +56,12 @@ If the API runs into the rate limit, the Spotify API's usually sends back how ma
 - It'll also log the error in the container's logs.
 
 Keep in mind that requesting in the Spotify's API while being in the rate limit will increase the time you have to wait to make another request, ranging from a few seconds to hours.
+
+## No API authentication system
+
+This project doesn't have an authentication system to access the API, so other can login with other spotify accounts or spam the notify route to get your account on rage limit.
+
+It's recommended to use it only in a private environment and exposing it only to login.
 
 ## Encryption Key
 
