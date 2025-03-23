@@ -4,7 +4,7 @@ from time import sleep
 
 import requests
 
-from src.db import create_db, get_db_conn
+from src.db import get_db_conn
 from src.utils import decrypt_str, encrypt_str, get_configs, get_logger
 
 
@@ -125,8 +125,6 @@ def get_token():
 
 
 def save_spotify_tokens(token: str, refresh_token: str, expires_in: datetime):
-    create_db()
-
     conn = get_db_conn()
     cursor = conn.cursor()
 
@@ -148,7 +146,6 @@ def save_spotify_tokens(token: str, refresh_token: str, expires_in: datetime):
 
 
 def get_spotify_tokens():
-    create_db()
     conn = get_db_conn()
     cursor = conn.cursor()
 
