@@ -6,13 +6,7 @@ import pytest
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../"))
 
-from src.spotify import (
-    get_artist_albums,
-    get_spotify_tokens,
-    get_token,
-    get_user_followed_artists,
-    save_spotify_tokens,
-)
+from src.spotify import SpotifyClient
 
 TEST_TOKEN = "test_token"
 
@@ -21,27 +15,30 @@ class TestToken:
     @pytest.mark.not_logged
     @pytest.mark.order(3)
     def test_save_false_spotify_tokens(self):
-        expires_in_seconds = 3600
-        expires_in = datetime.now() + timedelta(seconds=expires_in_seconds)
-        save_spotify_tokens(TEST_TOKEN, TEST_TOKEN, expires_in)
+        spotify = SpotifyClient()
+        expires_in = datetime.now() + timedelta(seconds=3600)
+        spotify.save_spotify_tokens(TEST_TOKEN, TEST_TOKEN, expires_in)
 
     @pytest.mark.not_logged
     @pytest.mark.order(4)
-    def test_get_false_spotify_tokens(self):
-        token, refresh_token, _ = get_spotify_tokens()
+    def test_get_tokens_from_db(self):
+        spotify = SpotifyClient()
+        token, refresh_token, _ = spotify._get_tokens_from_db()
         assert token == TEST_TOKEN
         assert refresh_token == TEST_TOKEN
 
     @pytest.mark.not_logged
     @pytest.mark.order(5)
     def test_get_token(self):
-        token = get_token()
-        assert token
+        spotify = SpotifyClient()
+        token = spotify._get_token()
+        assert token == TEST_TOKEN
 
     @pytest.mark.logged
     @pytest.mark.order(6)
-    def test_get_user_followed_artists(self, token):
-        artists = get_user_followed_artists(token)
+    def test_get_user_followed_artists(self):
+        spotify = SpotifyClient()
+        artists = spotify.get_user_followed_artists()
         assert len(artists) > 0
         for artist in artists:
             assert "id" in artist
@@ -52,8 +49,9 @@ class TestToken:
 
     @pytest.mark.logged
     @pytest.mark.order(7)
-    def test_get_artist_albums(self, token):
-        albums = get_artist_albums(token, "3fMbdgg4jU18AjLCKBhRSm")
+    def test_get_artist_albums(self):
+        spotify = SpotifyClient()
+        albums = spotify.get_artist_albums("3fMbdgg4jU18AjLCKBhRSm")
         assert len(albums) > 0
         for album in albums:
             assert "id" in album

@@ -8,13 +8,7 @@ from flask import Flask, jsonify, redirect, request, session
 from flask_rq import RQ
 from pytfy import NtfyPublisher
 
-from src.spotify import (
-    _get_token,
-    get_artist_albums,
-    get_token,
-    get_user_followed_artists,
-    save_spotify_tokens,
-)
+from src.spotify import SpotifyClient
 from src.utils import get_configs, get_logger
 
 configs = get_configs()
@@ -60,7 +54,8 @@ def callback():
         return jsonify({"error": "missing code"}), 400
 
     try:
-        token, refresh_token, expires_in_seconds = _get_token(
+        spotify = SpotifyClient()
+        token, refresh_token, expires_in_seconds = spotify._get_token_from_API(
             configs["client_id"],
             configs["client_secret"],
             code=code,
@@ -69,7 +64,7 @@ def callback():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     expires_in = datetime.now() + timedelta(seconds=expires_in_seconds - 5)
-    save_spotify_tokens(token, refresh_token, expires_in)
+    spotify.save_spotify_tokens(token, refresh_token, expires_in)
 
     return "OK"
 
@@ -107,14 +102,14 @@ def notify_spotify_releases(include_groups, notify_error, day_to_get_releases):
     day_releases = []
     logger = get_logger()
     try:
+        spotify = SpotifyClient()
         logger.info(f"Getting Spotify releases for {day_to_get_releases}...")
-        token = get_token()
-        artists = get_user_followed_artists(token)
+        artists = spotify.get_user_followed_artists()
 
         for artist in artists:
             try:
                 logger.debug(f"Getting albums for {artist['name']}...")
-                artist_albums = get_artist_albums(token, artist["id"], include_groups)
+                artist_albums = spotify.get_artist_albums(artist["id"], include_groups)
                 for album in artist_albums:
                     logger.debug(f"Checking album {album['name']}...")
                     if (
@@ -130,8 +125,8 @@ def notify_spotify_releases(include_groups, notify_error, day_to_get_releases):
                 )
                 try:
                     logger.debug(f"Getting albums for {artist['name']}...")
-                    artist_albums = get_artist_albums(
-                        token, artist["id"], include_groups
+                    artist_albums = spotify.get_artist_albums(
+                        artist["id"], include_groups
                     )
                     for album in artist_albums:
                         logger.debug(f"Checking album {album['name']}...")
@@ -162,7 +157,7 @@ def validate_include_groups_arg(include_groups: str | None) -> str | None:
     if include_groups:
         groups = include_groups.split(",")
         for group in groups:
-            if group not in ["album", "single", "appears_on", "compilation"]:
+            if group not in ["album", "single", "appears_on"]:
                 return None
         include_groups_ret = include_groups
 

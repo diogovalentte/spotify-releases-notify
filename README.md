@@ -28,7 +28,7 @@ Notifications are sent to a [Ntfy](https://github.com/binwiederhier/ntfy) topic.
 5. After this, the token used by the API is encrypted and saved in a database on `/config` inside the container.
 6. Now that the API is authenticated, you can use the `/spotify/notify` route to get the new releases from your followed artists. It accepts query parameters:
 
-- `include_groups`: A comma-separated list of keywords that will be used to filter the releases. The possible values are: `album`, `single`, `appears_on`, `compilation`. Default is `album,single,appears_on`.
+- `include_groups`: A comma-separated list of keywords that will be used to filter the releases. The possible values are: `album`, `single`, `appears_on`. Default is all.
 - `notify_error`: If `true`, the API will send a notification to the user if an error occurs. Default is `true`.
 - `date`: The date to get the releases from. It can be `today`, `yesterday`, or a specific date in the format `YYYY-MM-DD`. Default is today's date.
 
