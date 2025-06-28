@@ -121,8 +121,9 @@ def notify_spotify_releases(include_groups, notify_error, day_to_get_releases):
                         day_releases.append(album)
             except Exception as e:
                 logger.error(
-                    f"Error getting albums for {artist['name']}: {e}. Trying again..."
+                    f"Error getting albums for {artist['name']}: {e}. Trying again in 5 seconds..."
                 )
+                sleep(5)
                 try:
                     logger.debug(f"Getting albums for {artist['name']}...")
                     artist_albums = spotify.get_artist_albums(
