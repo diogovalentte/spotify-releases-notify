@@ -10,23 +10,29 @@ Notifications are sent to a [Ntfy](https://github.com/binwiederhier/ntfy) topic.
 
 ## Docker
 
-1. Create a [Spotify app](https://developer.spotify.com/dashboard) to get a client ID and secret. It'll be used to get your followed artists and releases.
+1. Create a folder for the application to store its database file. It should be owned by user `65532` (the user inside the container). You can use the following command to create the folder and set the permissions (_change the `./config` path to your desired location_):
+
+```bash
+mkdir -p ./config && sudo chown 65532:65532 ./config
+```
+
+2. Create a [Spotify app](https://developer.spotify.com/dashboard) to get a client ID and secret. It'll be used to get your followed artists and releases.
 
 - App name and description can be anything you want.
 - Redirect URL should be an URL where you can access the container's API from your web-browser + `/spotify/callback`. Examples:
 - `http://localhost:8000/spotify/callback`
 - `https://yourdomain.com/spotify/callback`
 
-2. Use the `docker-compose.yml` file in this repository to run the project. Use your Spotify's app client ID, secret, and redirect URL in the environment variables.
+3. Use the `docker-compose.yml` file in this repository to run the project. Use your Spotify's app client ID, secret, and redirect URL in the environment variables.
 
-3. After the container is running, access the API route `/spotify/login` to authenticate with Spotify. Examples:
+4. After the container is running, access the API route `/spotify/login` to authenticate with Spotify. Examples:
 
 - `http://localhost:8000/spotify/login`
 - `https://yourdomain.com/spotify/login`
 
-4. You should be redirected to the API's callback route with the "OK" message after agreeing with the Spotify's permissions.
-5. After this, the token used by the API is encrypted and saved in a database on `/config` inside the container.
-6. Now that the API is authenticated, you can use the `/spotify/notify` route to get the new releases from your followed artists. It accepts query parameters:
+5. You should be redirected to the API's callback route with the "OK" message after agreeing with the Spotify's permissions.
+6. After this, the token used by the API is encrypted and saved in a database on `/config` inside the container.
+7. Now that the API is authenticated, you can use the `/spotify/notify` route to get the new releases from your followed artists. It accepts query parameters:
 
 - `include_groups`: A comma-separated list of keywords that will be used to filter the releases. The possible values are: `album`, `single`, `appears_on`. Default is all.
 - `notify_error`: If `true`, the API will send a notification to the user if an error occurs. Default is `true`.
